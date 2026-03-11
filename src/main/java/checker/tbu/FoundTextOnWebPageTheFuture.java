@@ -1,6 +1,6 @@
 package checker.tbu;
 
-public final class FoundTextOnWebPageTheFuture implements checker.tbu.FoundTextOnWebPage {
+public final class FoundTextOnWebPageTheFuture implements FoundTextOnWebPage {
 
     private final String body;
     private final String textToFind;

@@ -19,8 +19,8 @@ public class ScheduledCheckTheFuture implements ScheduledCheck {
     @Autowired
     SendingMessageTelegramLongPollingBot bot;
 
-    @Value("${bot.myChatId}")
-    private Long myChatId;
+    @Value("${bot.chatId}")
+    private Long[] chatId;
 
     @Value("${bot.textToFind}")
     private String text;
@@ -29,19 +29,33 @@ public class ScheduledCheckTheFuture implements ScheduledCheck {
     private Boolean checkTheFuture;
 
     private LocalDateTime lastRun = LocalDateTime.now().minusDays(1);
+    private long lastHtmlBodyLength = 0;
 
     @Override
-    @Scheduled(fixedRateString = "${bot.scheduler.interval:900000}")
+    @Scheduled(fixedRateString = "${bot.scheduler.interval}")
     public void scheduledCheck() throws Exception {
         if (checkTheFuture) {
             String body = new BodyHtml(HttpClient.newHttpClient(), BASE_URL).body();
-            checker.tbu.FoundTextOnWebPage foundTextOnWebPage = new checker.tbu.FoundTextOnWebPageTheFuture(body, text);
-            if (foundTextOnWebPage.textExists()) {
-                bot.sendMessage("\uD83C\uDF89 Текст " + text + " на сайте Точки Будущего найден! \uD83C\uDF89", myChatId);
-            } else if (Duration.between(lastRun, LocalDateTime.now()).toHours() >= 24) {
-                bot.sendMessage("Набор в Точку Будущего пока не открыт", myChatId);
-                lastRun = LocalDateTime.now();
-            }
+            checkText(body);
+            checkLength(body);
         }
+    }
+
+    private void checkText(String body) {
+        FoundTextOnWebPage foundTextOnWebPage = new FoundTextOnWebPageTheFuture(body, text);
+        if (foundTextOnWebPage.textExists()) {
+            bot.sendMessage("\uD83C\uDF89 Текст " + text + " на сайте ТБ найден! \uD83C\uDF89", chatId);
+        } else if (Duration.between(lastRun, LocalDateTime.now()).toHours() >= 24) {
+            bot.sendMessage("Текст " + text + " на сайте ТБ не найден.", chatId);
+            lastRun = LocalDateTime.now();
+        }
+    }
+
+    private void checkLength(String body) {
+        long len = body.length();
+        if (lastHtmlBodyLength !=0 && lastHtmlBodyLength != len) {
+            bot.sendMessage("\uD83C\uDF89 Длина сайта ТБ изменилась! \uD83C\uDF89", chatId);
+        }
+        lastHtmlBodyLength = len;
     }
 }
