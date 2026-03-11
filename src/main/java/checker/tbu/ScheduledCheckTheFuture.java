@@ -12,12 +12,13 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Component
-public class ScheduledCheckTheFuture implements ScheduledCheck {
-
-    private final static String BASE_URL = "https://xn--80acgdf0a1ag2aob6b6a.xn--p1ai/irkutsk/";
+public final class ScheduledCheckTheFuture implements ScheduledCheck {
 
     @Autowired
     SendingMessageTelegramLongPollingBot bot;
+
+    @Value("${bot.url}")
+    private String BASE_URL;
 
     @Value("${bot.chatId}")
     private Long[] chatId;
