@@ -1,12 +1,16 @@
 package checker.bot;
 
+import checker.html.BodyHtml;
+import checker.tbu.Check;
+import checker.tbu.CheckTheFuture;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.net.http.HttpClient;
 
 @Component
 public final class Bot extends TelegramLongPollingBot implements SendingMessageTelegramLongPollingBot {
@@ -16,14 +20,8 @@ public final class Bot extends TelegramLongPollingBot implements SendingMessageT
     @Value("${bot.token}")
     private String botToken;
 
-    @Value("${bot.myChatId}")
-    private Long myChatId;
-
-    @Value("${bot.husbandsChatId}")
-    private Long husbandsChatId;
-
-    @Value("${bot.checkEnergy}")
-    private Boolean checkEnergy;
+    @Value("${bot.url}")
+    private String baseUrl;
 
     public String getBotUsername() {
         return botUsername;
@@ -46,17 +44,19 @@ public final class Bot extends TelegramLongPollingBot implements SendingMessageT
                 System.out.println("Failed to send message");
             }
         }
-
     }
 
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage()) {
-            Message message = update.getMessage();
-            System.out.println(message.getText());
-
-            //TODO
-            System.out.println(update.getMessage().getChatId());
+            Check ch = new CheckTheFuture(this, new Long[]{update.getMessage().getChatId()},
+                    update.getMessage().getText());
+            try {
+                String body = new BodyHtml(HttpClient.newHttpClient(), baseUrl).body();
+                ch.checkText(body);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

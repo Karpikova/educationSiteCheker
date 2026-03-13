@@ -12,6 +12,6 @@ public final class FoundTextOnWebPageTheFuture implements FoundTextOnWebPage {
 
     @Override
     public boolean textExists() {
-        return body.contains(textToFind);
+        return body.toLowerCase().contains(textToFind.toLowerCase());
     }
 }
